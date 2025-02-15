@@ -31,6 +31,11 @@ export function Combobox({
   emptyText = "No results found."
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const [searchQuery, setSearchQuery] = React.useState("")
+
+  const filteredOptions = options.filter(option =>
+    option.label.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -49,16 +54,21 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder={placeholder} />
+          <CommandInput 
+            placeholder={placeholder} 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
           <CommandEmpty>{emptyText}</CommandEmpty>
           <CommandGroup>
-            {options.map((option) => (
+            {filteredOptions.map((option) => (
               <CommandItem
                 key={option.value}
                 value={option.value}
                 onSelect={(currentValue) => {
                   onValueChange(currentValue === value ? "" : currentValue)
                   setOpen(false)
+                  setSearchQuery("")
                 }}
               >
                 <Check

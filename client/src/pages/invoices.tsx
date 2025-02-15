@@ -23,9 +23,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-  type Invoice, 
-  type Product, 
+import {
+  type Invoice,
+  type Product,
   type Customer,
   type InvoiceWithItems,
 } from "@shared/schema";
@@ -54,10 +54,10 @@ const columns: ColumnDef<Invoice>[] = [
     header: "Status",
     cell: ({ row }) => (
       <span className={`capitalize ${
-        row.original.status === "paid" 
-          ? "text-green-600" 
-          : row.original.status === "cancelled" 
-          ? "text-red-600" 
+        row.original.status === "paid"
+          ? "text-green-600"
+          : row.original.status === "cancelled"
+          ? "text-red-600"
           : "text-yellow-600"
       }`}>
         {row.original.status}
@@ -67,17 +67,16 @@ const columns: ColumnDef<Invoice>[] = [
 ];
 
 const invoiceItemSchema = z.object({
-  productId: z.number(),
-  quantity: z.number().min(1),
+  productId: z.number().min(1, "Please select a product"),
+  quantity: z.number().min(1, "Quantity must be at least 1"),
 });
 
-type InvoiceFormValues = {
-  customerId: number;
-  items: {
-    productId: number;
-    quantity: number;
-  }[];
-};
+const invoiceFormSchema = z.object({
+  customerId: z.number().min(1, "Please select a customer"),
+  items: z.array(invoiceItemSchema).min(1, "Add at least one item"),
+});
+
+type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
 export default function Invoices() {
   const [open, setOpen] = useState(false);
@@ -85,6 +84,7 @@ export default function Invoices() {
   const queryClient = useQueryClient();
 
   const form = useForm<InvoiceFormValues>({
+    resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       customerId: 0,
       items: [{ productId: 0, quantity: 1 }],
@@ -137,10 +137,21 @@ export default function Invoices() {
         description: "The invoice has been created successfully.",
       });
     },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create invoice",
+        variant: "destructive",
+      });
+    },
   });
 
-  function onSubmit(values: InvoiceFormValues) {
-    mutation.mutate(values);
+  async function onSubmit(values: InvoiceFormValues) {
+    try {
+      await mutation.mutateAsync(values);
+    } catch (error) {
+      console.error("Failed to create invoice:", error);
+    }
   }
 
   const customerOptions = customers?.map(customer => ({
