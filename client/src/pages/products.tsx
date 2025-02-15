@@ -60,7 +60,7 @@ export default function Products() {
     defaultValues: {
       name: "",
       sku: "",
-      price: 0,
+      price: "",  // Changed from 0 to empty string
       stock: 0,
     },
   });
@@ -134,10 +134,13 @@ export default function Products() {
                       <FormLabel>Price</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
+                          type="text" // Changed to text input
                           step="0.01"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value); // Pass the string value directly
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
