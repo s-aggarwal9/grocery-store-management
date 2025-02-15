@@ -36,7 +36,7 @@ import { z } from "zod";
 
 const columns: ColumnDef<Invoice>[] = [
   {
-    accessorKey: "id",
+    accessorKey: "invoiceNumber",
     header: "Invoice #",
   },
   {
@@ -73,6 +73,12 @@ const invoiceItemSchema = z.object({
 
 const invoiceFormSchema = z.object({
   customerId: z.number().min(1, "Please select a customer"),
+  invoiceNumber: z.string().min(1, "Invoice number is required"),
+  storeName: z.string().min(1, "Store name is required"),
+  storeAddress: z.string().min(1, "Store address is required"),
+  storePhone: z.string().optional(),
+  storeEmail: z.string().email().optional(),
+  notes: z.string().optional(),
   items: z.array(invoiceItemSchema).min(1, "Add at least one item"),
 });
 
@@ -87,6 +93,12 @@ export default function Invoices() {
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       customerId: 0,
+      invoiceNumber: `INV-${String(Date.now()).slice(-6)}`,
+      storeName: "My Store",
+      storeAddress: "123 Main St",
+      storePhone: "",
+      storeEmail: "",
+      notes: "",
       items: [{ productId: 0, quantity: 1 }],
     },
   });
@@ -122,8 +134,14 @@ export default function Invoices() {
       return apiRequest("POST", "/api/invoices", {
         invoice: {
           customerId: values.customerId,
+          invoiceNumber: values.invoiceNumber,
           total: total.toFixed(2),
           status: "pending",
+          storeName: values.storeName,
+          storeAddress: values.storeAddress,
+          storePhone: values.storePhone,
+          storeEmail: values.storeEmail,
+          notes: values.notes,
         },
         items,
       });
@@ -178,20 +196,110 @@ export default function Invoices() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="invoiceNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invoice Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="customerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Customer</FormLabel>
+                        <FormControl>
+                          <Combobox
+                            options={customerOptions}
+                            value={field.value.toString()}
+                            onValueChange={(value) => field.onChange(Number(value))}
+                            placeholder="Search customers..."
+                            emptyText="No customers found."
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="storeName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Store Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="storeAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Store Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="storePhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Store Phone</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="storeEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Store Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name="customerId"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer</FormLabel>
+                      <FormLabel>Notes</FormLabel>
                       <FormControl>
-                        <Combobox
-                          options={customerOptions}
-                          value={field.value.toString()}
-                          onValueChange={(value) => field.onChange(Number(value))}
-                          placeholder="Search customers..."
-                          emptyText="No customers found."
-                        />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

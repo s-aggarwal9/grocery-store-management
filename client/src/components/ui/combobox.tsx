@@ -31,10 +31,13 @@ export function Combobox({
   emptyText = "No results found."
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const [searchTerm, setSearchTerm] = React.useState("")
 
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredOptions = React.useMemo(() => 
+    options.filter(option =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [options, searchTerm]
   )
 
   return (
@@ -53,11 +56,11 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder={placeholder} 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
+            value={searchTerm}
+            onValueChange={setSearchTerm}
           />
           <CommandEmpty>{emptyText}</CommandEmpty>
           <CommandGroup>
@@ -68,7 +71,7 @@ export function Combobox({
                 onSelect={(currentValue) => {
                   onValueChange(currentValue === value ? "" : currentValue)
                   setOpen(false)
-                  setSearchQuery("")
+                  setSearchTerm("")
                 }}
               >
                 <Check

@@ -19,10 +19,17 @@ export const customers = pgTable("customers", {
 
 export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull().default('INV-001'),
   customerId: integer("customer_id").notNull(),
   date: timestamp("date").notNull().defaultNow(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
+  // Store details
+  storeName: text("store_name").notNull().default('My Store'),
+  storeAddress: text("store_address").notNull().default('123 Main St'),
+  storePhone: text("store_phone"),
+  storeEmail: text("store_email"),
+  notes: text("notes"),
 });
 
 export const invoiceItems = pgTable("invoice_items", {

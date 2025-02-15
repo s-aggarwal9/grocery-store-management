@@ -78,8 +78,14 @@ export async function registerRoutes(app: Express) {
     const schema = z.object({
       invoice: z.object({
         customerId: z.number(),
+        invoiceNumber: z.string(),
         total: z.string(),
         status: z.string(),
+        storeName: z.string(),
+        storeAddress: z.string(),
+        storePhone: z.string().optional(),
+        storeEmail: z.string().optional(),
+        notes: z.string().optional(),
       }),
       items: z.array(z.object({
         productId: z.number(),
