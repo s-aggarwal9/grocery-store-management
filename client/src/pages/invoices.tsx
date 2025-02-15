@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/layout";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -16,13 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -116,18 +110,19 @@ export default function Invoices() {
         if (!product) throw new Error("Product not found");
         return {
           ...item,
-          price: Number(product.price),
+          price: product.price,
         };
       });
 
       const total = items.reduce((acc, item) => {
-        return acc + (item.price * item.quantity);
+        const product = products?.find(p => p.id === item.productId);
+        return acc + (Number(product?.price || 0) * item.quantity);
       }, 0);
 
       await apiRequest("POST", "/api/invoices", {
         invoice: {
           customerId: values.customerId,
-          total,
+          total: total.toString(),
           status: "pending",
         },
         items,
@@ -148,6 +143,16 @@ export default function Invoices() {
     mutation.mutate(values);
   }
 
+  const customerOptions = customers?.map(customer => ({
+    label: customer.name,
+    value: customer.id.toString(),
+  })) || [];
+
+  const productOptions = products?.map(product => ({
+    label: `${product.name} - ${CURRENCY_FORMATTER.format(Number(product.price))}`,
+    value: product.id.toString(),
+  })) || [];
+
   return (
     <Layout heading="Invoices">
       <div className="mb-4">
@@ -167,26 +172,15 @@ export default function Invoices() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Customer</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a customer" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {customers?.map((customer) => (
-                            <SelectItem
-                              key={customer.id}
-                              value={customer.id.toString()}
-                            >
-                              {customer.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={customerOptions}
+                          value={field.value.toString()}
+                          onValueChange={(value) => field.onChange(Number(value))}
+                          placeholder="Search customers..."
+                          emptyText="No customers found."
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -200,31 +194,15 @@ export default function Invoices() {
                         name={`items.${index}.productId`}
                         render={({ field }) => (
                           <FormItem className="flex-1">
-                            <Select
-                              onValueChange={(value) =>
-                                field.onChange(Number(value))
-                              }
-                              defaultValue={field.value.toString()}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a product" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {products?.map((product) => (
-                                  <SelectItem
-                                    key={product.id}
-                                    value={product.id.toString()}
-                                  >
-                                    {product.name} -{" "}
-                                    {CURRENCY_FORMATTER.format(
-                                      Number(product.price)
-                                    )}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <Combobox
+                                options={productOptions}
+                                value={field.value.toString()}
+                                onValueChange={(value) => field.onChange(Number(value))}
+                                placeholder="Search products..."
+                                emptyText="No products found."
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -240,9 +218,7 @@ export default function Invoices() {
                                 type="number"
                                 min="1"
                                 {...field}
-                                onChange={(e) =>
-                                  field.onChange(Number(e.target.value))
-                                }
+                                onChange={(e) => field.onChange(Number(e.target.value))}
                               />
                             </FormControl>
                             <FormMessage />
