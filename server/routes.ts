@@ -76,21 +76,31 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/invoices", async (req, res) => {
     const schema = z.object({
-      invoice: insertInvoiceSchema,
+      invoice: z.object({
+        customerId: z.number(),
+        total: z.string(),
+        status: z.string(),
+      }),
       items: z.array(z.object({
         productId: z.number(),
         quantity: z.number(),
-        price: z.number(),
+        price: z.string(),
       })),
     });
 
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ message: "Invalid invoice data" });
+      console.error("Invalid invoice data:", result.error);
+      return res.status(400).json({ message: "Invalid invoice data", errors: result.error.errors });
     }
 
-    const invoice = await storage.createInvoice(result.data.invoice, result.data.items);
-    res.status(201).json(invoice);
+    try {
+      const invoice = await storage.createInvoice(result.data.invoice, result.data.items);
+      res.status(201).json(invoice);
+    } catch (error) {
+      console.error("Failed to create invoice:", error);
+      res.status(500).json({ message: "Failed to create invoice" });
+    }
   });
 
   app.patch("/api/invoices/:id/status", async (req, res) => {

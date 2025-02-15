@@ -105,24 +105,24 @@ export default function Invoices() {
 
   const mutation = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
-      const items = values.items.map(item => {
+      const items = await Promise.all(values.items.map(async (item) => {
         const product = products?.find(p => p.id === item.productId);
         if (!product) throw new Error("Product not found");
         return {
-          ...item,
+          productId: item.productId,
+          quantity: item.quantity,
           price: product.price,
         };
-      });
+      }));
 
       const total = items.reduce((acc, item) => {
-        const product = products?.find(p => p.id === item.productId);
-        return acc + (Number(product?.price || 0) * item.quantity);
+        return acc + (Number(item.price) * item.quantity);
       }, 0);
 
-      await apiRequest("POST", "/api/invoices", {
+      return apiRequest("POST", "/api/invoices", {
         invoice: {
           customerId: values.customerId,
-          total: total.toString(),
+          total: total.toFixed(2),
           status: "pending",
         },
         items,
@@ -138,6 +138,7 @@ export default function Invoices() {
       });
     },
     onError: (error) => {
+      console.error("Invoice creation error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create invoice",
